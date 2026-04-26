@@ -25,11 +25,10 @@ A real-time self-driving car simulation built with **Python**, **OpenCV**, and *
 
 ```
 dip/
-├── main.py                 # Multi-threaded integration (Member C)
-├── lane_detection.py       # Classical lane detection (Member A)
-├── object_detection.py     # YOLOv8 obstacle detection (Member B)
-├── decision.py             # Rule-based decision engine (Member C)
-├── metrics.py              # Performance tracking (Member D)
+├── main.py                 # Multi-threaded integration (Ahsan Javed)
+├── lane_detection.py       # Classical lane detection (Rahim Jamil)
+├── object_detection.py     # YOLOv8 obstacle detection (Naeemullah Aziz)
+├── decision.py             # Rule-based decision engine (Ahsan Javed)
 ├── requirements.txt        # Python dependencies
 ├── README.md               # This file
 └── dataset/                # Road video files (.mp4)
@@ -46,8 +45,8 @@ dip/
 ### Setup
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/dip-project.git
-cd dip-project
+git clone https://github.com/Rahim36712/self-driving-simulation.git
+cd self-driving-simulation
 
 # Install dependencies
 pip install -r requirements.txt
@@ -133,10 +132,10 @@ Video Frame
 
 | Member | Role | File |
 |--------|------|------|
-| A | Lane Detection + Report | `lane_detection.py` |
-| B | YOLO Detection + GitHub | `object_detection.py` |
-| C | Integration + Decision | `main.py`, `decision.py` |
-| D | Testing + Slides | `metrics.py` |
+| RAHIM JAMIL | Lane Detection + Report | `lane_detection.py` |
+| NAEEMULLAH AZIZ | YOLO Detection + GitHub | `object_detection.py` |
+| AHSAN JAVED | Integration + Decision | `main.py`, `decision.py` |
+| ABDULLAH KHAN | Testing + Slides | |
 
 ---
 
