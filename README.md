@@ -1,0 +1,145 @@
+# Self-Driving Car Simulation — DIP Project (Spring 2026)
+
+A real-time self-driving car simulation built with **Python**, **OpenCV**, and **YOLOv8**. The system processes dashcam video to detect lane markings and obstacles, then outputs driving decisions (FORWARD / STOP / TURN LEFT / TURN RIGHT).
+
+> **No real car or hardware needed** — runs entirely on a laptop with pre-recorded road video.
+
+---
+
+## Features
+
+- **Lane Detection** — Classical CV pipeline: Grayscale → Gaussian Blur → Canny Edge Detection → Hough Line Transform
+- **Adaptive Thresholding** — Alternative to Canny for uneven lighting (toggle with `A` key)
+- **Polynomial Fitting** — Curved lane detection using `np.polyfit()` (toggle with `F` key)
+- **YOLOv8 Object Detection** — Pre-trained nano model detects people, cars, bikes in real-time
+- **Distance Classification** — Bounding box area → CLOSE (red) / NEAR (orange) / FAR (green)
+- **Zone Detection** — Frame split into LEFT / CENTER / RIGHT to determine obstacle position
+- **Rule-Based Decision Engine** — Combines lane + obstacle info → single driving command
+- **Multi-Threaded Pipeline** — Lane detection + YOLO run concurrently for 15+ FPS
+- **6-Panel Debug View** — Original, Edges, Lanes, YOLO, Merged, Decision (toggle with `D` key)
+- **Performance Metrics** — FPS tracking, decision distribution, lane success rate
+
+---
+
+## Project Structure
+
+```
+dip/
+├── main.py                 # Multi-threaded integration (Member C)
+├── lane_detection.py       # Classical lane detection (Member A)
+├── object_detection.py     # YOLOv8 obstacle detection (Member B)
+├── decision.py             # Rule-based decision engine (Member C)
+├── metrics.py              # Performance tracking (Member D)
+├── requirements.txt        # Python dependencies
+├── README.md               # This file
+└── dataset/                # Road video files (.mp4)
+```
+
+---
+
+## Installation
+
+### Prerequisites
+- Python 3.8+
+- pip
+
+### Setup
+```bash
+# Clone the repository
+git clone https://github.com/YOUR_USERNAME/dip-project.git
+cd dip-project
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### Dataset
+Place road video files (`.mp4`) in the `dataset/` folder.
+
+---
+
+## Usage
+
+### Run the full simulation
+```bash
+python main.py
+```
+
+### Keyboard Controls
+| Key | Action |
+|-----|--------|
+| `Q` | Quit |
+| `D` | Toggle 6-panel debug view |
+| `P` | Pause / Resume |
+| `A` | Toggle adaptive thresholding |
+| `F` | Toggle polynomial curve fitting |
+| `N` | Next video (cycles through dataset) |
+| `M` | Toggle multi-stream mode (2-4 videos) |
+| `S` | Save screenshot + performance report |
+| `R` | Reset metrics |
+
+### Test individual modules
+```bash
+python lane_detection.py      # Test lane detection only
+python object_detection.py    # Test YOLO detection only
+python decision.py            # Test decision logic
+```
+
+---
+
+## System Architecture
+
+```
+Video Frame
+    │
+    ├──► Thread 1: Lane Detection
+    │    Grayscale → Blur → Canny → ROI → Hough → Lane Lines
+    │
+    ├──► Thread 2: YOLO Detection
+    │    YOLOv8n → Bounding Boxes → Distance → Zone
+    │
+    └──► Main Thread: Merge + Decision
+         Lane info + Obstacle info → Decision Engine → Display
+```
+
+---
+
+## Decision Rules
+
+| Condition | Output |
+|-----------|--------|
+| Close obstacle in CENTER | **STOP** |
+| Close obstacle on LEFT | **TURN RIGHT** |
+| Close obstacle on RIGHT | **TURN LEFT** |
+| No lanes detected | **STOP - NO LANES** |
+| Left lane missing | **TURN LEFT** |
+| Right lane missing | **TURN RIGHT** |
+| Offset > 80px right | **STEER LEFT** |
+| Offset > 80px left | **STEER RIGHT** |
+| All clear | **FORWARD** |
+
+---
+
+## Technologies Used
+
+- **OpenCV** — Image processing (Canny, Hough, morphology)
+- **NumPy** — Numerical operations, polynomial fitting
+- **YOLOv8 (ultralytics)** — Real-time object detection
+- **Python threading** — Concurrent pipeline execution
+
+---
+
+## Team
+
+| Member | Role | File |
+|--------|------|------|
+| A | Lane Detection + Report | `lane_detection.py` |
+| B | YOLO Detection + GitHub | `object_detection.py` |
+| C | Integration + Decision | `main.py`, `decision.py` |
+| D | Testing + Slides | `metrics.py` |
+
+---
+
+## License
+
+This project is for educational purposes — Digital Image Processing course, Spring 2026.
