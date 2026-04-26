@@ -132,10 +132,10 @@ Video Frame
 
 | Member | Role | File |
 |--------|------|------|
-| RAHIM JAMIL | YOLO Detection | `object_detection.py` |
+| RAHIM JAMIL | YOLO Detection,Integration | `object_detection.py`,`main.py` |
 | NAEEMULLAH AZIZ | YOLO Detection | `object_detection.py` |
-| AHSAN JAVED | Lane Detection, Report, Integration & Testing | `lane_detection.py`, `main.py` |
-| ABDULLAH KHAN | YOLO Detection, Decision | `object_detection.py`, `decision.py` |
+| AHSAN JAVED | Lane Detection, Testing | `lane_detection.py`, `main.py` |
+| ABDULLAH KHAN | Report, Decision | `decision.py` |
 
 ---
 
