@@ -25,10 +25,10 @@ A real-time self-driving car simulation built with **Python**, **OpenCV**, and *
 
 ```
 dip/
-├── main.py                 # Multi-threaded integration (Ahsan Javed)
-├── lane_detection.py       # Classical lane detection (Rahim Jamil)
-├── object_detection.py     # YOLOv8 obstacle detection (Naeemullah Aziz)
-├── decision.py             # Rule-based decision engine (Ahsan Javed)
+├── main.py                 # Integration and Testing (Ahsan Javed)
+├── lane_detection.py       # Classical lane detection (Ahsan Javed)
+├── object_detection.py     # YOLOv8 obstacle detection (Rahim, Naeem, Abdullah)
+├── decision.py             # Rule-based decision engine (Abdullah Khan)
 ├── requirements.txt        # Python dependencies
 ├── README.md               # This file
 └── dataset/                # Road video files (.mp4)
@@ -132,10 +132,10 @@ Video Frame
 
 | Member | Role | File |
 |--------|------|------|
-| RAHIM JAMIL | Lane Detection + Report | `lane_detection.py` |
-| NAEEMULLAH AZIZ | YOLO Detection + GitHub | `object_detection.py` |
-| AHSAN JAVED | Integration + Decision | `main.py`, `decision.py` |
-| ABDULLAH KHAN | Testing + Slides | |
+| RAHIM JAMIL | YOLO Detection | `object_detection.py` |
+| NAEEMULLAH AZIZ | YOLO Detection | `object_detection.py` |
+| AHSAN JAVED | Lane Detection, Report, Integration & Testing | `lane_detection.py`, `main.py` |
+| ABDULLAH KHAN | YOLO Detection, Decision | `object_detection.py`, `decision.py` |
 
 ---
 
