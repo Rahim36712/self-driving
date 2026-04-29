@@ -10,7 +10,7 @@ from lane_detection import detect_lanes
 from object_detection import YOLODetector, SegmentationEngine, detect_objects, draw_zone_lines
 from decision import make_driving_decision, draw_decision
 
-# --- Config ---
+
 FRAME_W = 960
 FRAME_H = 540
 MULTI_W = 480
@@ -65,7 +65,7 @@ class VideoStream:
         self.frame_count += 1
         t0 = time.time()
 
-        # lane detection (classical)
+
         left, right, offset, edges, lane_frame, method = detect_lanes(
             frame, self.use_adaptive, self.use_poly)
         self.lane_result = {
@@ -73,14 +73,14 @@ class VideoStream:
             'edges': edges, 'lane_frame': lane_frame, 'method': method
         }
 
-        # yolo detection (deep learning)
+
         dets, threat, blocked, yolo_frame = detect_objects(frame, self.detector)
         self.yolo_result = {
             'detections': dets, 'threat': threat,
             'blocked': blocked, 'yolo_frame': yolo_frame
         }
 
-        # segmentation (if enabled)
+
         self.road_occ = 0.0
         self.seg_primary = None
         if self.use_seg and self.seg_engine and self.seg_engine.available:
@@ -90,7 +90,7 @@ class VideoStream:
         else:
             self.seg_result = None
 
-        # decision
+
         self.decision, self.reason = make_driving_decision(
             left, right, offset, threat, blocked, self.road_occ, self.seg_primary)
 
@@ -111,7 +111,7 @@ class VideoStream:
         out = frame.copy()
         h, w = out.shape[:2]
 
-        # draw lane area + lines
+
         if self.lane_result:
             left = self.lane_result['left']
             right = self.lane_result['right']
@@ -126,7 +126,7 @@ class VideoStream:
             if right:
                 cv2.line(out, (right[0], right[1]), (right[2], right[3]), (0, 255, 0), 3)
 
-        # draw yolo boxes
+
         if self.yolo_result:
             for det in self.yolo_result['detections']:
                 x1, y1, x2, y2 = det['bbox']
@@ -141,7 +141,7 @@ class VideoStream:
 
         out = draw_decision(out, self.decision, self.reason, self.avg_fps())
 
-        # status bar
+
         lr = self.lane_result or {}
         yr = self.yolo_result or {}
         info = f"L:{'Y' if lr.get('left') else 'N'} R:{'Y' if lr.get('right') else 'N'} | " \
@@ -173,13 +173,13 @@ class VideoStream:
                  f"LANES L:{'Y' if lr.get('left') else 'N'} R:{'Y' if lr.get('right') else 'N'}")
         p4 = lbl(rp(yr.get('yolo_frame')), f"YOLO [{yr.get('threat', 'N/A')}]")
 
-        # panel 5: segmentation or merged view
+
         if self.seg_result and self.seg_result.get('overlay') is not None:
             p5 = lbl(rp(self.seg_result['overlay']), f"SEGMENTATION ({len(self.seg_result.get('masks', []))} obj)")
         else:
             p5 = lbl(rp(self.build_output(frame)), "MERGED")
 
-        # decision panel
+
         p6 = np.zeros((ph, pw, 3), np.uint8)
         p6[:] = 20
         font = cv2.FONT_HERSHEY_SIMPLEX

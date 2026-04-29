@@ -3,22 +3,22 @@ import numpy as np
 import time
 from collections import deque
 
-# --- Config ---
+
 MODEL_PATH = "yolov8n.pt"
 SEG_MODEL_PATH = "yolov8n-seg.pt"
 CONFIDENCE_THRESHOLD = 0.4
 YOLO_SKIP_FRAMES = 2
 SEG_SKIP_FRAMES = 3
 
-# distance thresholds (% of frame area)
+
 CLOSE_AREA_PCT = 0.08
 NEAR_AREA_PCT = 0.03
 
-# zone boundaries
+
 LEFT_ZONE = 0.33
 RIGHT_ZONE = 0.66
 
-# colors (BGR)
+
 COLOR_CLOSE = (0, 0, 255)
 COLOR_NEAR = (0, 165, 255)
 COLOR_FAR = (0, 255, 0)
@@ -47,7 +47,7 @@ class YOLODetector:
     def run(self, frame):
         self.frame_count += 1
 
-        # skip frames for speed, but always run if no cached result
+
         if (self.frame_count % YOLO_SKIP_FRAMES != 0
                 and self.last_detections is not None
                 and self.last_yolo_frame is not None):
@@ -137,7 +137,7 @@ class SegmentationEngine:
                         mask_area = np.sum(binary)
                         area_pct = mask_area / (w * h)
 
-                        # find centroid
+
                         moments = cv2.moments(binary)
                         if moments["m00"] > 0:
                             cx = int(moments["m10"] / moments["m00"])
@@ -149,7 +149,7 @@ class SegmentationEngine:
                         zone = 'LEFT' if cx < w * LEFT_ZONE else ('RIGHT' if cx > w * RIGHT_ZONE else 'CENTER')
                         distance = 'CLOSE' if area_pct > CLOSE_AREA_PCT else ('NEAR' if area_pct > NEAR_AREA_PCT else 'FAR')
 
-                        # draw colored overlay on mask
+
                         colored = np.zeros_like(overlay)
                         colored[binary == 1] = color
                         overlay = cv2.addWeighted(overlay, 1.0, colored, 0.45, 0)
@@ -180,7 +180,7 @@ class SegmentationEngine:
         return min(total * 100, 100.0), primary
 
 
-# --- Helper functions ---
+
 
 def _classify_distance(det, frame_area):
     pct = det['area'] / max(frame_area, 1)

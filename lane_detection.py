@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-# --- Config ---
+
 CANNY_LOW = 50
 CANNY_HIGH = 150
 BLUR_KERNEL = (5, 5)
@@ -20,7 +20,7 @@ MIN_POLY_POINTS = 50
 
 
 def apply_roi(frame, roi_ratio=0.6):
-    # mask everything except bottom part of frame (where road is)
+
     h, w = frame.shape[:2]
     vertices = np.array([[
         (0, h),
@@ -35,7 +35,7 @@ def apply_roi(frame, roi_ratio=0.6):
 
 
 def canny_edges(frame):
-    # standard pipeline: grayscale -> blur -> canny
+
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(gray, BLUR_KERNEL, 0)
     edges = cv2.Canny(blurred, CANNY_LOW, CANNY_HIGH)
@@ -43,7 +43,7 @@ def canny_edges(frame):
 
 
 def adaptive_threshold_edges(frame):
-    # alternative to canny, works better in uneven lighting
+
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(gray, BLUR_KERNEL, 0)
     thresh = cv2.adaptiveThreshold(
@@ -56,7 +56,7 @@ def adaptive_threshold_edges(frame):
 
 
 def _average_lines(lines):
-    # average multiple line segments into one slope+intercept
+
     if not lines:
         return None
     slopes, intercepts = [], []
@@ -82,7 +82,7 @@ def _extrapolate_line(slope_intercept, y_bottom, y_top):
 
 
 def detect_lanes_hough(edges):
-    # hough transform to find straight lines, then separate left/right by slope
+
     lines = cv2.HoughLinesP(
         edges, rho=HOUGH_RHO, theta=HOUGH_THETA, threshold=HOUGH_THRESHOLD,
         minLineLength=HOUGH_MIN_LINE_LEN, maxLineGap=HOUGH_MAX_LINE_GAP
@@ -107,7 +107,7 @@ def detect_lanes_hough(edges):
 
 
 def fit_polynomial_lane(edge_image, side='left'):
-    # fit a 2nd degree curve to edge pixels for curved roads
+
     h, w = edge_image.shape[:2]
     mid = w // 2
     if side == 'left':
@@ -166,7 +166,7 @@ def detect_lanes(frame, use_adaptive=False, use_poly=False):
 
     roi_edges = apply_roi(edges)
 
-    # try polynomial fitting if enabled
+
     left_pts, right_pts = None, None
     if use_poly:
         left_pts, _ = fit_polynomial_lane(roi_edges, 'left')
@@ -174,7 +174,7 @@ def detect_lanes(frame, use_adaptive=False, use_poly=False):
         if left_pts or right_pts:
             method += "+Poly"
 
-    # hough lines (always run for straight line detection)
+
     left_hough, right_hough, raw_lines = detect_lanes_hough(roi_edges)
     y_bottom = h - 1
     y_top = int(h * 0.4)
@@ -183,7 +183,7 @@ def detect_lanes(frame, use_adaptive=False, use_poly=False):
     if not (left_pts or right_pts):
         method += "+Hough"
 
-    # draw on frame
+
     lane_frame = frame.copy()
     if use_poly and (left_pts or right_pts):
         lane_frame = draw_curved_lanes(lane_frame, left_pts, right_pts)
@@ -194,7 +194,7 @@ def detect_lanes(frame, use_adaptive=False, use_poly=False):
         cv2.line(lane_frame, (right_line[0], right_line[1]),
                  (right_line[2], right_line[3]), LANE_COLOR, LANE_THICKNESS)
 
-    # calculate how far lane center is from frame center
+
     offset = 0
     if left_line is not None and right_line is not None:
         lane_center = (left_line[0] + right_line[0]) // 2
