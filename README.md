@@ -45,8 +45,8 @@ dip/
 ### Setup
 ```bash
 # Clone the repository
-git clone https://github.com/Rahim36712/self-driving-simulation.git
-cd self-driving-simulation
+git clone https://github.com/Rahim36712/self-driving.git
+cd self-driving
 
 # Install dependencies
 pip install -r requirements.txt
