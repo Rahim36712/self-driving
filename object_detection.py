@@ -2,8 +2,6 @@ import cv2
 import numpy as np
 import time
 from collections import deque
-
-
 MODEL_PATH = "yolov8n.pt"
 SEG_MODEL_PATH = "yolov8n-seg.pt"
 CONFIDENCE_THRESHOLD = 0.4

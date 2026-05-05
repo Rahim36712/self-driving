@@ -4,7 +4,6 @@ import time
 import glob
 import os
 import sys
-from datetime import datetime
 
 from lane_detection import detect_lanes
 from object_detection import YOLODetector, SegmentationEngine, detect_objects, draw_zone_lines
@@ -13,25 +12,17 @@ from decision import make_driving_decision, draw_decision
 
 FRAME_W = 960
 FRAME_H = 540
-MULTI_W = 480
-MULTI_H = 270
 
 
 class VideoStream:
     """Processes one video stream with lane detection + YOLO + segmentation."""
 
-    def __init__(self, source, detector, seg_engine=None, stream_id=0, is_webcam=False):
+    def __init__(self, source, detector, seg_engine=None):
         self.detector = detector
         self.seg_engine = seg_engine
-        self.stream_id = stream_id
-        self.is_webcam = is_webcam
 
-        if isinstance(source, cv2.VideoCapture):
-            self.cap = source
-            self.video_name = "Webcam (Live)"
-        else:
-            self.cap = cv2.VideoCapture(source)
-            self.video_name = os.path.basename(source)
+        self.cap = cv2.VideoCapture(source)
+        self.video_name = os.path.basename(source)
 
         self.current_frame = None
         self.frame_count = 0
@@ -51,8 +42,6 @@ class VideoStream:
     def process_frame(self, target_size=None):
         ret, raw = self.cap.read()
         if not ret:
-            if self.is_webcam:
-                return None
             self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
             ret, raw = self.cap.read()
             if not ret:
@@ -65,7 +54,6 @@ class VideoStream:
         self.frame_count += 1
         t0 = time.time()
 
-
         left, right, offset, edges, lane_frame, method = detect_lanes(
             frame, self.use_adaptive, self.use_poly)
         self.lane_result = {
@@ -73,13 +61,11 @@ class VideoStream:
             'edges': edges, 'lane_frame': lane_frame, 'method': method
         }
 
-
         dets, threat, blocked, yolo_frame = detect_objects(frame, self.detector)
         self.yolo_result = {
             'detections': dets, 'threat': threat,
             'blocked': blocked, 'yolo_frame': yolo_frame
         }
-
 
         self.road_occ = 0.0
         self.seg_primary = None
@@ -89,7 +75,6 @@ class VideoStream:
             self.road_occ, self.seg_primary = self.seg_engine.get_road_occupancy(masks)
         else:
             self.seg_result = None
-
 
         self.decision, self.reason = make_driving_decision(
             left, right, offset, threat, blocked, self.road_occ, self.seg_primary)
@@ -111,7 +96,6 @@ class VideoStream:
         out = frame.copy()
         h, w = out.shape[:2]
 
-
         if self.lane_result:
             left = self.lane_result['left']
             right = self.lane_result['right']
@@ -126,7 +110,6 @@ class VideoStream:
             if right:
                 cv2.line(out, (right[0], right[1]), (right[2], right[3]), (0, 255, 0), 3)
 
-
         if self.yolo_result:
             for det in self.yolo_result['detections']:
                 x1, y1, x2, y2 = det['bbox']
@@ -140,7 +123,6 @@ class VideoStream:
             out = draw_zone_lines(out)
 
         out = draw_decision(out, self.decision, self.reason, self.avg_fps())
-
 
         lr = self.lane_result or {}
         yr = self.yolo_result or {}
@@ -173,12 +155,10 @@ class VideoStream:
                  f"LANES L:{'Y' if lr.get('left') else 'N'} R:{'Y' if lr.get('right') else 'N'}")
         p4 = lbl(rp(yr.get('yolo_frame')), f"YOLO [{yr.get('threat', 'N/A')}]")
 
-
         if self.seg_result and self.seg_result.get('overlay') is not None:
             p5 = lbl(rp(self.seg_result['overlay']), f"SEGMENTATION ({len(self.seg_result.get('masks', []))} obj)")
         else:
             p5 = lbl(rp(self.build_output(frame)), "MERGED")
-
 
         p6 = np.zeros((ph, pw, 3), np.uint8)
         p6[:] = 20
@@ -208,36 +188,9 @@ class VideoStream:
             self.cap.release()
 
 
-class MultiStream:
-    def __init__(self, video_paths, detector, seg_engine=None, max_streams=4):
-        n = min(len(video_paths), max_streams)
-        self.streams = [VideoStream(video_paths[i], detector, seg_engine, i) for i in range(n)]
-
-    def process(self):
-        frames = []
-        for s in self.streams:
-            frame = s.process_frame(target_size=(MULTI_W, MULTI_H))
-            if frame is not None:
-                out = s.build_output(frame)
-                cv2.putText(out, f"Stream {s.stream_id+1}: {s.video_name[:25]}",
-                            (5, 15), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 200, 200), 1)
-                frames.append(out)
-            else:
-                frames.append(np.zeros((MULTI_H, MULTI_W, 3), np.uint8))
-        while len(frames) < 4:
-            frames.append(np.zeros((MULTI_H, MULTI_W, 3), np.uint8))
-        return np.vstack([np.hstack(frames[:2]), np.hstack(frames[2:4])])
-
-    def release(self):
-        for s in self.streams:
-            s.release()
-
-
 def main():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     dataset_dir = os.path.join(script_dir, "dataset")
-    ss_dir = os.path.join(script_dir, "screenshots")
-    os.makedirs(ss_dir, exist_ok=True)
 
     videos = []
     for ext in ["*.mp4", "*.avi", "*.mkv", "*.mov", "*.ts"]:
@@ -256,52 +209,29 @@ def main():
     seg_engine = SegmentationEngine()
 
     idx = 0
-    multi_mode = False
     debug_mode = False
-    paused = False
-    webcam = False
 
     stream = VideoStream(videos[idx], detector, seg_engine)
-    multi = None
 
     print(f"\nPlaying: {stream.video_name}")
-    print("Keys: Q=quit D=debug P=pause A=adaptive F=polyfit G=seg N=next M=multi W=webcam S=screenshot\n")
+    print("Keys: Q=quit D=debug N=next\n")
 
     while True:
-        if paused:
-            k = cv2.waitKey(100) & 0xFF
-            if k == ord('p'):
-                paused = False
-            elif k == ord('q'):
-                break
+        frame = stream.process_frame()
+        if frame is None:
             continue
 
-        if multi_mode:
-            if multi is None:
-                cv2.destroyAllWindows()
-                multi = MultiStream(videos, detector, seg_engine)
-            cv2.imshow("Multi-Stream", multi.process())
+        if debug_mode:
+            cv2.imshow(f"Debug - {stream.video_name}", stream.build_debug(frame))
         else:
-            if multi:
-                multi.release()
-                multi = None
-                cv2.destroyAllWindows()
+            cv2.imshow(f"Self-Driving - {stream.video_name}", stream.build_output(frame))
 
-            frame = stream.process_frame()
-            if frame is None:
-                continue
-
-            if debug_mode:
-                cv2.imshow(f"Debug - {stream.video_name}", stream.build_debug(frame))
-            else:
-                cv2.imshow(f"Self-Driving - {stream.video_name}", stream.build_output(frame))
-
-            if stream.frame_count % 20 == 0:
-                lr = stream.lane_result or {}
-                yr = stream.yolo_result or {}
-                print(f"FPS:{stream.avg_fps():5.1f} | "
-                      f"L:{'Y' if lr.get('left') else 'N'} R:{'Y' if lr.get('right') else 'N'} | "
-                      f"Threat:{yr.get('threat','?'):5s} | >> {stream.decision}")
+        if stream.frame_count % 20 == 0:
+            lr = stream.lane_result or {}
+            yr = stream.yolo_result or {}
+            print(f"FPS:{stream.avg_fps():5.1f} | "
+                  f"L:{'Y' if lr.get('left') else 'N'} R:{'Y' if lr.get('right') else 'N'} | "
+                  f"Threat:{yr.get('threat','?'):5s} | >> {stream.decision}")
 
         key = cv2.waitKey(1) & 0xFF
         if key == ord('q'):
@@ -309,50 +239,13 @@ def main():
         elif key == ord('d'):
             debug_mode = not debug_mode
             cv2.destroyAllWindows()
-        elif key == ord('p'):
-            paused = True
-        elif key == ord('a') and not multi_mode:
-            stream.use_adaptive = not stream.use_adaptive
-        elif key == ord('f') and not multi_mode:
-            stream.use_poly = not stream.use_poly
-        elif key == ord('g') and not multi_mode:
-            stream.use_seg = not stream.use_seg
-        elif key == ord('w'):
-            cv2.destroyAllWindows()
-            webcam = not webcam
-            stream.release()
-            if webcam:
-                cam = cv2.VideoCapture(0)
-                if cam.isOpened():
-                    stream = VideoStream(cam, detector, seg_engine, is_webcam=True)
-                else:
-                    webcam = False
-                    stream = VideoStream(videos[idx], detector, seg_engine)
-            else:
-                stream = VideoStream(videos[idx], detector, seg_engine)
-        elif key == ord('n') and not multi_mode and not webcam:
+        elif key == ord('n'):
             cv2.destroyAllWindows()
             stream.release()
             idx = (idx + 1) % len(videos)
             stream = VideoStream(videos[idx], detector, seg_engine)
-        elif key == ord('m'):
-            multi_mode = not multi_mode
-            webcam = False
-            cv2.destroyAllWindows()
-            if not multi_mode:
-                stream = VideoStream(videos[idx], detector, seg_engine)
-        elif key == ord('s'):
-            ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-            path = os.path.join(ss_dir, f"ss_{ts}.png")
-            if multi_mode and multi:
-                cv2.imwrite(path, multi.process())
-            elif stream.current_frame is not None:
-                img = stream.build_debug(stream.current_frame) if debug_mode else stream.build_output(stream.current_frame)
-                cv2.imwrite(path, img)
 
     stream.release()
-    if multi:
-        multi.release()
     cv2.destroyAllWindows()
 
 
