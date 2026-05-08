@@ -70,13 +70,7 @@ python main.py
 | `Q` | Quit |
 | `D` | Toggle 6-panel debug view |
 | `P` | Pause / Resume |
-| `A` | Toggle adaptive thresholding |
-| `F` | Toggle polynomial curve fitting |
 | `N` | Next video (cycles through dataset) |
-| `M` | Toggle multi-stream mode (2-4 videos) |
-| `S` | Save screenshot + performance report |
-| `R` | Reset metrics |
-
 ### Test individual modules
 ```bash
 python lane_detection.py      # Test lane detection only
