@@ -1,6 +1,7 @@
 import cv2
 
 OFFSET_THRESHOLD = 80
+ROAD_BLOCK_PCT = 25.0
 
 DECISION_COLORS = {
     'FORWARD': (0, 220, 100), 'STOP': (0, 0, 255),
@@ -13,7 +14,10 @@ DECISION_COLORS = {
 
 def make_driving_decision(left_line, right_line, offset, obstacle_threat,
                           blocked_zones, road_occupancy=0.0, seg_primary=None):
-
+    """
+    Rule-based decision engine. Checks conditions in priority order
+    and returns (decision_string, reason_string).
+    """
     if obstacle_threat == 'CLOSE':
         if 'CENTER' in blocked_zones:
             if len(blocked_zones) >= 3:
@@ -34,17 +38,17 @@ def make_driving_decision(left_line, right_line, offset, obstacle_threat,
         if 'RIGHT' in blocked_zones:
             return 'TURN LEFT', 'Obstacle nearby right'
 
-
+    if road_occupancy > ROAD_BLOCK_PCT:
+        lbl = seg_primary.get('label', 'obstacle') if seg_primary else 'obstacles'
+        return 'STOP - BLOCKED', f'Road {road_occupancy:.0f}% blocked by {lbl}'
 
     if left_line is None and right_line is None:
         return 'STOP - NO LANES', 'No lane markings detected'
-
 
     if left_line is None:
         return 'TURN LEFT', 'Left lane not detected'
     if right_line is None:
         return 'TURN RIGHT', 'Right lane not detected'
-
 
     if offset > OFFSET_THRESHOLD:
         return 'STEER LEFT', f'Drifting right ({offset:+d}px)'
@@ -58,11 +62,9 @@ def draw_decision(frame, decision, reason="", fps=0.0):
     h, w = frame.shape[:2]
     color = DECISION_COLORS.get(decision, (200, 200, 200))
 
-
     overlay = frame.copy()
     cv2.rectangle(overlay, (0, h - 80), (w, h), (0, 0, 0), -1)
     frame = cv2.addWeighted(frame, 0.6, overlay, 0.4, 0)
-
 
     font = cv2.FONT_HERSHEY_SIMPLEX
     sz = cv2.getTextSize(decision, font, 1.2, 3)[0]

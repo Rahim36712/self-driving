@@ -2,20 +2,18 @@ import cv2
 import numpy as np
 import time
 from collections import deque
+
 MODEL_PATH = "yolov8n.pt"
 SEG_MODEL_PATH = "yolov8n-seg.pt"
 CONFIDENCE_THRESHOLD = 0.4
 YOLO_SKIP_FRAMES = 2
 SEG_SKIP_FRAMES = 3
 
-
 CLOSE_AREA_PCT = 0.08
 NEAR_AREA_PCT = 0.03
 
-
 LEFT_ZONE = 0.33
 RIGHT_ZONE = 0.66
-
 
 COLOR_CLOSE = (0, 0, 255)
 COLOR_NEAR = (0, 165, 255)
@@ -44,7 +42,6 @@ class YOLODetector:
 
     def run(self, frame):
         self.frame_count += 1
-
 
         if (self.frame_count % YOLO_SKIP_FRAMES != 0
                 and self.last_detections is not None
@@ -135,7 +132,6 @@ class SegmentationEngine:
                         mask_area = np.sum(binary)
                         area_pct = mask_area / (w * h)
 
-
                         moments = cv2.moments(binary)
                         if moments["m00"] > 0:
                             cx = int(moments["m10"] / moments["m00"])
@@ -146,7 +142,6 @@ class SegmentationEngine:
 
                         zone = 'LEFT' if cx < w * LEFT_ZONE else ('RIGHT' if cx > w * RIGHT_ZONE else 'CENTER')
                         distance = 'CLOSE' if area_pct > CLOSE_AREA_PCT else ('NEAR' if area_pct > NEAR_AREA_PCT else 'FAR')
-
 
                         colored = np.zeros_like(overlay)
                         colored[binary == 1] = color
@@ -176,8 +171,6 @@ class SegmentationEngine:
         center = [m for m in masks_info if m['zone'] == 'CENTER']
         primary = max(center, key=lambda m: m['area_pct']) if center else max(masks_info, key=lambda m: m['area_pct'])
         return min(total * 100, 100.0), primary
-
-
 
 
 def _classify_distance(det, frame_area):
